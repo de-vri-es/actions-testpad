@@ -17,9 +17,7 @@ jobs:
       commit: ${{ steps.firmware-commit.outputs.result }}
       ref: ${{ steps.firmware-tag.outputs.result || steps.firmware-branch.outputs.result || steps.firmware-commit.outputs.result }}
     steps:
-      - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.CI_PAT }}
+      - uses: actions/checkout@v7
       - name: Get firmware tag
         id: firmware-tag
         uses: mikefarah/yq@master
