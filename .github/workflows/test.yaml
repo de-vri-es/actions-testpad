@@ -13,26 +13,34 @@ jobs:
       tag: ${{ steps.firmware-tag.outputs.result }}
       branch: ${{ steps.firmware-branch.outputs.result }}
       commit: ${{ steps.firmware-commit.outputs.result }}
-      ref: ${{ steps.firmware-tag.outputs.result || steps.firmware-branch.outputs.result || steps.firmware-commit.outputs.result }}
+      ref: ${{ steps.firmware-ref.outputs.result || steps.firmware-branch.outputs.result || steps.firmware-commit.outputs.result }}
     steps:
       - uses: actions/checkout@v7
       - name: Get firmware tag
         id: firmware-tag
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.dependencies.foo.tag' Cargo.toml
+          cmd: yq '.dependencies.foo.tag // ""' Cargo.toml
       - name: Get firmware branch
         id: firmware-branch
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.dependencies.foo.branch' Cargo.toml
+          cmd: yq '.dependencies.foo.branch // ""' Cargo.toml
       - name: Get firmware commit
         id: firmware-commit
         uses: mikefarah/yq@master
         with:
-          cmd: yq '.dependencies.foo.rev' Cargo.toml
+          cmd: yq '.dependencies.foo.rev // ""' Cargo.toml
+      - name: Print results
+        run: |
+          printf "tag: %s\n" "${{ steps.firmware-tag.outputs.result }}"
+          printf "branch: %s\n" "${{ steps.firmware-branch.outputs.result }}"
+          printf "commit: %s\n" "${{ steps.firmware-commit.outputs.result }}"
+          printf "ref: %s\n" "${{ steps.firmware-tag.outputs.result || steps.firmware-branch.outputs.result || steps.firmware-commit.outputs.result }}"
+          printf "head_ref: %s\n" "${{ github.head_ref }}"
       - name: Ensure tagged firmware for releases
-        if: startsWith(github.head_ref, 'autorelease/') && !steps.firmware-tag.outputs.result
+        if: |
+          startsWith(github.head_ref, 'autorelease/') && steps.firmware-tag.outputs.result == ''
         run: |
           echo "Releases must use a tagged version of the firmware."
           false
