@@ -1,0 +1,39 @@
+name: Get dependency version
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  firmware-version:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      tag: ${{ steps.firmware-tag.outputs.result }}
+      branch: ${{ steps.firmware-branch.outputs.result }}
+      commit: ${{ steps.firmware-commit.outputs.result }}
+      ref: ${{ steps.firmware-tag.outputs.result || steps.firmware-branch.outputs.result || steps.firmware-commit.outputs.result }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Get firmware tag
+        id: firmware-tag
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.dependencies.foo.tag' Cargo.toml
+      - name: Get firmware branch
+        id: firmware-branch
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.dependencies.foo.branch' Cargo.toml
+      - name: Get firmware commit
+        id: firmware-commit
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.dependencies.foo.rev' Cargo.toml
+      - name: Ensure tagged firmware for releases
+        if: startsWith(github.head_ref, 'autorelease/') && !steps.firmware-tag.outputs.result
+        run: |
+          echo "Releases must use a tagged version of the firmware."
+          false
+
